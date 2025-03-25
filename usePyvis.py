@@ -384,7 +384,7 @@ if uploaded_file is not None:
     # Optimize edilmiş "Unvan" çıkarma fonksiyonu
 
     def extract_title(name):
-    titles = [
+        titles = [
         "Prof. Dr.", "Prof.", "Doç. Dr.", "Dr. Öğr. Üyesi", "Öğr. Gör.", "Arş. Gör.",
         "Asst. Prof.", "Assoc. Prof.", "Lect. PhD", "Res. Asst."
     ]
@@ -410,7 +410,7 @@ if uploaded_file is not None:
             elif title != "Prof.":
                 return title_mapping[title]
     return "Diğer"
-
+    
     # Unvan sütununu ekle
     df["Unvan"] = df["Ad Soyad"].apply(extract_title)
 
