@@ -382,27 +382,34 @@ if uploaded_file is not None:
         st.info("Veri hataları nedeniyle kaldırılan araştırmacı yok.")
 
     # Optimize edilmiş "Unvan" çıkarma fonksiyonu
+
     def extract_title(name):
-        titles = [
-            "Prof. Dr.", "Prof.", "Doç. Dr.", "Dr. Öğr. Üyesi", "Öğr. Gör.", "Arş. Gör.",
-            "Asst. Prof.", "Assoc. Prof.", "Lect. PhD", "Res. Asst."
-        ]
-        title_mapping = {
-            "Prof. Dr.": "Prof. Dr.",
-            "Prof.": "Prof. Dr.",
-            "Doç. Dr.": "Doç. Dr.",
-            "Dr. Öğr. Üyesi": "Dr. Öğr. Üyesi",
-            "Öğr. Gör.": "Öğr. Gör.",
-            "Arş. Gör.": "Arş. Gör.",
-            "Asst. Prof.": "Dr. Öğr. Üyesi",
-            "Assoc. Prof.": "Doç. Dr.",
-            "Lect. PhD": "Öğr. Gör.",
-            "Res. Asst.": "Arş. Gör."
-        }
-        for title in titles:
-            if title in name:
+    titles = [
+        "Prof. Dr.", "Prof.", "Doç. Dr.", "Dr. Öğr. Üyesi", "Öğr. Gör.", "Arş. Gör.",
+        "Asst. Prof.", "Assoc. Prof.", "Lect. PhD", "Res. Asst."
+    ]
+    title_mapping = {
+        "Prof. Dr.": "Prof. Dr.",
+        "Prof.": "Prof. Dr.",  # Only standalone "Prof." maps to "Prof. Dr."
+        "Doç. Dr.": "Doç. Dr.",
+        "Dr. Öğr. Üyesi": "Dr. Öğr. Üyesi",
+        "Öğr. Gör.": "Öğr. Gör.",
+        "Arş. Gör.": "Arş. Gör.",
+        "Asst. Prof.": "Dr. Öğr. Üyesi",  # Assistant Professor
+        "Assoc. Prof.": "Doç. Dr.",      # Associate Professor
+        "Lect. PhD": "Öğr. Gör.",
+        "Res. Asst.": "Arş. Gör."
+    }
+    
+    # Check titles in order of specificity to avoid partial matches
+    for title in titles:
+        if title in name:
+            # Ensure "Prof." is not part of "Asst. Prof." or "Assoc. Prof."
+            if title == "Prof." and ("Asst. Prof." not in name and "Assoc. Prof." not in name):
                 return title_mapping[title]
-        return "Diğer"
+            elif title != "Prof.":
+                return title_mapping[title]
+    return "Diğer"
 
     # Unvan sütununu ekle
     df["Unvan"] = df["Ad Soyad"].apply(extract_title)
