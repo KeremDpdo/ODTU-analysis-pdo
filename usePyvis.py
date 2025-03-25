@@ -456,6 +456,64 @@ if uploaded_file is not None:
     st.plotly_chart(fig2, use_container_width=True)
     st.write("**Açıklama:** Birim (örneğin fakülte) başına araştırmacı sayısı.")
 
+        # 11. Birim Bazında AB Projesi Dağılımı (Pasta Grafiği)
+    st.header("Birim Bazında AB Projesi Dağılımı", anchor="birim-ab-projesi")
+    eu_cols = [col for col in df.columns if "AB Projesi" in col]
+    eu_data = df.groupby("Birim")[eu_cols].sum().sum(axis=1).reset_index()
+    eu_data.columns = ["Birim", "AB Projeleri"]
+    eu_data["Birim"] = pd.Categorical(eu_data["Birim"], categories=FACULTY_ORDER, ordered=True)
+    fig13 = px.pie(eu_data, names="Birim", values="AB Projeleri", title="Birim Bazında AB Projesi Dağılımı")
+    fig13.update_layout(height=600, width=1000)
+    st.plotly_chart(fig13, use_container_width=True)
+    st.write("**Açıklama:** Birimlere göre AB projeleri. Her dilim bir birimi gösterir.")
+
+    # 12. Yıl Bazında Yayın Kalitesi Dağılımı (Pasta Grafiği)
+    st.header("Yıl Bazında Yayın Kalitesi Dağılımı", anchor="yil-yayin-kalitesi")
+    pub_quality_cols = [col for col in df.columns if "SCI, SCI-E, SSCI veya AHCI kapsamındaki hakemli dergide yayımlanan tam makale veya derleme" in col]
+    pub_quality_data = df[pub_quality_cols].sum().reset_index()
+    pub_quality_data["Yıl"] = pub_quality_data["index"].str.extract(r"\((\d{4})\)")[0]
+    pub_quality_data["Kalite"] = pub_quality_data["index"].str.extract(r"\((Q\d Grubu)\)")
+    pub_quality_data = pub_quality_data.dropna(subset=["Kalite"])
+    pub_quality_data = pub_quality_data.groupby(["Yıl", "Kalite"]).sum().reset_index()
+    for year in ["2025", "2026", "2027"]:
+        year_data = pub_quality_data[pub_quality_data["Yıl"] == year]
+        fig = px.pie(year_data, names="Kalite", values=0, title=f"{year} Yılında Yayın Kalitesi Dağılımı")
+        fig.update_layout(height=500, width=800)
+        st.plotly_chart(fig, use_container_width=True)
+        st.write(f"**Açıklama:** {year} yılı için yayın kalitesi (Q1, Q2, Q3, Q4). Her dilim bir kalite grubunu gösterir.")
+
+    # 13. Toplam Yayın Sayısına Göre İlk 5 Bölüm (Çubuk Grafiği)
+    st.header("Toplam Yayın Sayısına Göre İlk 5 Bölüm", anchor="top-5-bolum")
+    pub_cols_all = [col for col in df.columns if any(p in col for p in ["SCI", "ESCI", "Scopus", "AHCI kapsamındaki hakemli dergide yayımlanan tam makale veya derleme (Quartile Sınıflandırması Bulunmayan)"])]
+    df["Toplam Yayınlar"] = df[pub_cols_all].sum(axis=1)
+    top_depts = df.groupby("Bölüm")["Toplam Yayınlar"].sum().reset_index()
+    top_depts = top_depts.sort_values("Toplam Yayınlar", ascending=False).head(5)
+    top_depts["Bölüm"] = pd.Categorical(top_depts["Bölüm"], categories=DEPARTMENT_ORDER, ordered=True)
+    fig14 = px.bar(top_depts, x="Bölüm", y="Toplam Yayınlar", title="Toplam Yayın Sayısına Göre İlk 5 Bölüm")
+    fig14.update_layout(
+        xaxis={'tickangle': 45},
+        height=500,
+        width=1000
+    )
+    fig14.update_traces(marker_color="green")
+    st.plotly_chart(fig14, use_container_width=True)
+    st.write("**Açıklama:** En çok yayın yapan 5 bölüm. Toplam yayınlar SCI, ESCI, Scopus vb. içerir.")
+
+    # 13b. Toplam Yayın Sayısına Göre İlk 5 Birim (Çubuk Grafiği)
+    st.header("Toplam Yayın Sayısına Göre İlk 5 Birim", anchor="top-5-birim")
+    top_faculties = df.groupby("Birim")["Toplam Yayınlar"].sum().reset_index()
+    top_faculties = top_faculties.sort_values("Toplam Yayınlar", ascending=False).head(5)
+    top_faculties["Birim"] = pd.Categorical(top_faculties["Birim"], categories=FACULTY_ORDER, ordered=True)
+    fig14b = px.bar(top_faculties, x="Birim", y="Toplam Yayınlar", title="Toplam Yayın Sayısına Göre İlk 5 Birim")
+    fig14b.update_layout(
+        xaxis={'tickangle': 45},
+        height=500,
+        width=1000
+    )
+    fig14b.update_traces(marker_color="green")
+    st.plotly_chart(fig14b, use_container_width=True)
+    st.write("**Açıklama:** En çok yayın yapan 5 birim. Toplam yayınlar SCI, ESCI, Scopus vb. içerir.")
+
     # 3. Bölüm ve Unvan Bazında Başvuru Sayısı (Balon Grafiği)
     st.header("Bölüm ve Unvan Bazında Başvuru Sayısı (Balon Grafiği)", anchor="bolum-unvan-balon")
     bubble_data = df.groupby(["Bölüm", "Unvan"]).size().reset_index(name="Başvuru Sayısı")
@@ -723,64 +781,6 @@ if uploaded_file is not None:
     fig12b.update_layout(height=600, width=1000)
     st.plotly_chart(fig12b, use_container_width=True)
     st.write("**Açıklama:** Q1+Q2 yayınlar ve projeler. Birimlere göre renklendirilmiş. Nokta büyüklüğü toplam çıktıyı gösterir.")
-
-    # 11. Birim Bazında AB Projesi Dağılımı (Pasta Grafiği)
-    st.header("Birim Bazında AB Projesi Dağılımı", anchor="birim-ab-projesi")
-    eu_cols = [col for col in df.columns if "AB Projesi" in col]
-    eu_data = df.groupby("Birim")[eu_cols].sum().sum(axis=1).reset_index()
-    eu_data.columns = ["Birim", "AB Projeleri"]
-    eu_data["Birim"] = pd.Categorical(eu_data["Birim"], categories=FACULTY_ORDER, ordered=True)
-    fig13 = px.pie(eu_data, names="Birim", values="AB Projeleri", title="Birim Bazında AB Projesi Dağılımı")
-    fig13.update_layout(height=600, width=1000)
-    st.plotly_chart(fig13, use_container_width=True)
-    st.write("**Açıklama:** Birimlere göre AB projeleri. Her dilim bir birimi gösterir.")
-
-    # 12. Yıl Bazında Yayın Kalitesi Dağılımı (Pasta Grafiği)
-    st.header("Yıl Bazında Yayın Kalitesi Dağılımı", anchor="yil-yayin-kalitesi")
-    pub_quality_cols = [col for col in df.columns if "SCI, SCI-E, SSCI veya AHCI kapsamındaki hakemli dergide yayımlanan tam makale veya derleme" in col]
-    pub_quality_data = df[pub_quality_cols].sum().reset_index()
-    pub_quality_data["Yıl"] = pub_quality_data["index"].str.extract(r"\((\d{4})\)")[0]
-    pub_quality_data["Kalite"] = pub_quality_data["index"].str.extract(r"\((Q\d Grubu)\)")
-    pub_quality_data = pub_quality_data.dropna(subset=["Kalite"])
-    pub_quality_data = pub_quality_data.groupby(["Yıl", "Kalite"]).sum().reset_index()
-    for year in ["2025", "2026", "2027"]:
-        year_data = pub_quality_data[pub_quality_data["Yıl"] == year]
-        fig = px.pie(year_data, names="Kalite", values=0, title=f"{year} Yılında Yayın Kalitesi Dağılımı")
-        fig.update_layout(height=500, width=800)
-        st.plotly_chart(fig, use_container_width=True)
-        st.write(f"**Açıklama:** {year} yılı için yayın kalitesi (Q1, Q2, Q3, Q4). Her dilim bir kalite grubunu gösterir.")
-
-    # 13. Toplam Yayın Sayısına Göre İlk 5 Bölüm (Çubuk Grafiği)
-    st.header("Toplam Yayın Sayısına Göre İlk 5 Bölüm", anchor="top-5-bolum")
-    pub_cols_all = [col for col in df.columns if any(p in col for p in ["SCI", "ESCI", "Scopus", "AHCI kapsamındaki hakemli dergide yayımlanan tam makale veya derleme (Quartile Sınıflandırması Bulunmayan)"])]
-    df["Toplam Yayınlar"] = df[pub_cols_all].sum(axis=1)
-    top_depts = df.groupby("Bölüm")["Toplam Yayınlar"].sum().reset_index()
-    top_depts = top_depts.sort_values("Toplam Yayınlar", ascending=False).head(5)
-    top_depts["Bölüm"] = pd.Categorical(top_depts["Bölüm"], categories=DEPARTMENT_ORDER, ordered=True)
-    fig14 = px.bar(top_depts, x="Bölüm", y="Toplam Yayınlar", title="Toplam Yayın Sayısına Göre İlk 5 Bölüm")
-    fig14.update_layout(
-        xaxis={'tickangle': 45},
-        height=500,
-        width=1000
-    )
-    fig14.update_traces(marker_color="green")
-    st.plotly_chart(fig14, use_container_width=True)
-    st.write("**Açıklama:** En çok yayın yapan 5 bölüm. Toplam yayınlar SCI, ESCI, Scopus vb. içerir.")
-
-    # 13b. Toplam Yayın Sayısına Göre İlk 5 Birim (Çubuk Grafiği)
-    st.header("Toplam Yayın Sayısına Göre İlk 5 Birim", anchor="top-5-birim")
-    top_faculties = df.groupby("Birim")["Toplam Yayınlar"].sum().reset_index()
-    top_faculties = top_faculties.sort_values("Toplam Yayınlar", ascending=False).head(5)
-    top_faculties["Birim"] = pd.Categorical(top_faculties["Birim"], categories=FACULTY_ORDER, ordered=True)
-    fig14b = px.bar(top_faculties, x="Birim", y="Toplam Yayınlar", title="Toplam Yayın Sayısına Göre İlk 5 Birim")
-    fig14b.update_layout(
-        xaxis={'tickangle': 45},
-        height=500,
-        width=1000
-    )
-    fig14b.update_traces(marker_color="green")
-    st.plotly_chart(fig14b, use_container_width=True)
-    st.write("**Açıklama:** En çok yayın yapan 5 birim. Toplam yayınlar SCI, ESCI, Scopus vb. içerir.")
 
     # 14. Zaman İçindeki Proje Türü Dağılımı (Çizgi Grafiği)
     st.header("Zaman İçindeki Proje Türü Dağılımı", anchor="zaman-proje-turu")
