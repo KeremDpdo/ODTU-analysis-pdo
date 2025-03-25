@@ -319,8 +319,8 @@ if uploaded_file is not None:
         df['Birim'] = pd.Categorical(df['Birim'], categories=[f for f in FACULTY_ORDER if f in df['Birim'].unique()], ordered=True)
         df['Bölüm'] = pd.Categorical(df['Bölüm'], categories=[d for d in DEPARTMENT_ORDER if d in df['Bölüm'].unique()], ordered=True)
         
-        st.success("Dosya başarıyla yüklendi.<br>Fakülte/bölüm isimleri https://www.metu.edu.tr/tr/fakulteler-enstituler-ve-okullar kaynağına göre standardize edildi.")
-        
+        st.success("Dosya başarıyla yüklendi.")
+        st.success("Fakülte/bölüm isimleri https://www.metu.edu.tr/tr/fakulteler-enstituler-ve-okullar kaynağına göre standardize edildi.")
         # Check for unmapped faculties or departments
         unmapped_faculties = df['Birim'][~df['Birim'].isin(FACULTY_MAPPING.values())].unique()
         unmapped_departments = df['Bölüm'][~df['Bölüm'].isin(DEPARTMENT_MAPPING.values())].unique()
