@@ -175,7 +175,6 @@ DEPARTMENT_MAPPING = {
     "Department of City and Regional Planning": "Şehir ve Bölge Planlama Bölümü",
     "Endüstriyel Tasarım Bölümü": "Endüstriyel Tasarım Bölümü",
     "Department of Industrial Design": "Endüstriyel Tasarım Bölümü",
-    
     # Fen Edebiyat Fakültesi
     "Biyolojik Bilimler Bölümü": "Biyolojik Bilimler Bölümü",
     "Department of Biology": "Biyolojik Bilimler Bölümü",
@@ -195,7 +194,6 @@ DEPARTMENT_MAPPING = {
     "Department of Sociology": "Sosyoloji Bölümü",
     "İstatistik Bölümü": "İstatistik Bölümü",
     "Department of Statistics": "İstatistik Bölümü",
-    
     # İktisadi ve İdari Bilimler Fakültesi
     "İşletme Bölümü": "İşletme Bölümü",
     "Department of Business Administration": "İşletme Bölümü",
@@ -205,7 +203,6 @@ DEPARTMENT_MAPPING = {
     "Department of International Relations": "Uluslararası İlişkiler Bölümü",
     "Siyaset Bilimi ve Kamu Yönetimi Bölümü": "Siyaset Bilimi ve Kamu Yönetimi Bölümü",
     "Department of Political Science and Public Administration": "Siyaset Bilimi ve Kamu Yönetimi Bölümü",
-    
     # Eğitim Fakültesi
     "Bilgisayar ve Öğretim Teknolojileri Eğitimi Bölümü": "Bilgisayar ve Öğretim Teknolojileri Eğitimi Bölümü",
     "Department of Computer Education and Instructional Technology": "Bilgisayar ve Öğretim Teknolojileri Eğitimi Bölümü",
@@ -219,7 +216,6 @@ DEPARTMENT_MAPPING = {
     "Department of Physical Education and Sports": "Beden Eğitimi ve Spor Bölümü",
     "Matematik ve Fen Bilimleri Eğitimi Bölümü": "Matematik ve Fen Bilimleri Eğitimi Bölümü",
     "Mathematics and Science Education": "Matematik ve Fen Bilimleri Eğitimi Bölümü",
-    
     # Mühendislik Fakültesi
     "Havacılık ve Uzay Mühendisliği Bölümü": "Havacılık ve Uzay Mühendisliği Bölümü",
     "Department of Aerospace Engineering": "Havacılık ve Uzay Mühendisliği Bölümü",
@@ -249,7 +245,6 @@ DEPARTMENT_MAPPING = {
     "Department of Mining Engineering": "Maden Mühendisliği Bölümü",
     "Petrol ve Doğal Gaz Mühendisliği Bölümü": "Petrol ve Doğal Gaz Mühendisliği Bölümü",
     "Department of Petroleum and Natural Gas Engineering": "Petrol ve Doğal Gaz Mühendisliği Bölümü",
-    
     # Enstitüler (Sub-divisions)
     "Modelleme ve Simülasyon Anabilim Dalı": "Modelleme ve Simülasyon Anabilim Dalı",
     "Bilişim Sistemleri Anabilim Dalı": "Bilişim Sistemleri Anabilim Dalı",
@@ -267,11 +262,9 @@ DEPARTMENT_MAPPING = {
     "Deniz Jeolojisi ve Jeofiziği Anabilim Dalı": "Deniz Jeolojisi ve Jeofiziği Anabilim Dalı",
     "Deniz Bilim (Osinografi) Anabilim Dalı": "Deniz Bilimleri (Oşinografi) Anabilim Dalı",
     "Oceanography": "Deniz Bilimleri (Oşinografi) Anabilim Dalı",
-    
     # Yabancı Diller Yüksekokulu
     "Yabancı Diller Bölümü": "Yabancı Diller Bölümü",
     "Depatment of Foreign Languages": "Yabancı Diller Bölümü",  # Typo correction
-    
     # Rektörlüğe Bağlı Bölümler
     "Türk Dili Bölümü": "Türk Dili Bölümü",
     "Müzik ve Güzel Sanatlar Bölümü": "Müzik ve Güzel Sanatlar Bölümü",
@@ -319,8 +312,8 @@ if uploaded_file is not None:
         df['Birim'] = pd.Categorical(df['Birim'], categories=[f for f in FACULTY_ORDER if f in df['Birim'].unique()], ordered=True)
         df['Bölüm'] = pd.Categorical(df['Bölüm'], categories=[d for d in DEPARTMENT_ORDER if d in df['Bölüm'].unique()], ordered=True)
         
-        st.success("Dosya başarıyla yüklendi.")
-        st.success("Fakülte/bölüm isimleri https://www.metu.edu.tr/tr/fakulteler-enstituler-ve-okullar kaynağına göre standardize edildi.")
+        st.success("Dosya başarıyla yüklendi ve fakülte/bölüm isimleri standardize edildi!")
+        
         # Check for unmapped faculties or departments
         unmapped_faculties = df['Birim'][~df['Birim'].isin(FACULTY_MAPPING.values())].unique()
         unmapped_departments = df['Bölüm'][~df['Bölüm'].isin(DEPARTMENT_MAPPING.values())].unique()
@@ -381,36 +374,35 @@ if uploaded_file is not None:
     else:
         st.info("Veri hataları nedeniyle kaldırılan araştırmacı yok.")
 
-    # Optimize edilmiş "Unvan" çıkarma fonksiyonu
-
+    # Optimize edilmiş "Unvan" çıkarma fonksiyonu (Refined version)
     def extract_title(name):
         titles = [
-        "Prof. Dr.", "Prof.", "Doç. Dr.", "Dr. Öğr. Üyesi", "Öğr. Gör.", "Arş. Gör.",
-        "Asst. Prof.", "Assoc. Prof.", "Lect. PhD", "Res. Asst."
-    ]
-    title_mapping = {
-        "Prof. Dr.": "Prof. Dr.",
-        "Prof.": "Prof. Dr.",  # Only standalone "Prof." maps to "Prof. Dr."
-        "Doç. Dr.": "Doç. Dr.",
-        "Dr. Öğr. Üyesi": "Dr. Öğr. Üyesi",
-        "Öğr. Gör.": "Öğr. Gör.",
-        "Arş. Gör.": "Arş. Gör.",
-        "Asst. Prof.": "Dr. Öğr. Üyesi",  # Assistant Professor
-        "Assoc. Prof.": "Doç. Dr.",      # Associate Professor
-        "Lect. PhD": "Öğr. Gör.",
-        "Res. Asst.": "Arş. Gör."
-    }
-    
-    # Check titles in order of specificity to avoid partial matches
-    for title in titles:
-        if title in name:
-            # Ensure "Prof." is not part of "Asst. Prof." or "Assoc. Prof."
-            if title == "Prof." and ("Asst. Prof." not in name and "Assoc. Prof." not in name):
-                return title_mapping[title]
-            elif title != "Prof.":
-                return title_mapping[title]
-    return "Diğer"
-    
+            "Prof. Dr.", "Prof.", "Doç. Dr.", "Dr. Öğr. Üyesi", "Öğr. Gör.", "Arş. Gör.",
+            "Asst. Prof.", "Assoc. Prof.", "Lect. PhD", "Res. Asst."
+        ]
+        title_mapping = {
+            "Prof. Dr.": "Prof. Dr.",
+            "Prof.": "Prof. Dr.",  # Only standalone "Prof." maps to "Prof. Dr."
+            "Doç. Dr.": "Doç. Dr.",
+            "Dr. Öğr. Üyesi": "Dr. Öğr. Üyesi",
+            "Öğr. Gör.": "Öğr. Gör.",
+            "Arş. Gör.": "Arş. Gör.",
+            "Asst. Prof.": "Dr. Öğr. Üyesi",  # Assistant Professor
+            "Assoc. Prof.": "Doç. Dr.",      # Associate Professor
+            "Lect. PhD": "Öğr. Gör.",
+            "Res. Asst.": "Arş. Gör."
+        }
+        
+        # Check titles in order of specificity to avoid partial matches
+        for title in titles:
+            if title in name:
+                # Ensure "Prof." is not part of "Asst. Prof." or "Assoc. Prof."
+                if title == "Prof." and ("Asst. Prof." not in name and "Assoc. Prof." not in name):
+                    return title_mapping[title]
+                elif title != "Prof.":
+                    return title_mapping[title]
+        return "Diğer"
+
     # Unvan sütununu ekle
     df["Unvan"] = df["Ad Soyad"].apply(extract_title)
 
