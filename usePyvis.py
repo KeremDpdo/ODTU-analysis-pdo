@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from io import StringIO
+import uuid
 
 # Streamlit app başlığı
 st.title("ODTÜ Yayın ve Proje Başvuru Planları Analizi")
@@ -60,7 +61,11 @@ FACULTY_ORDER = [
     "İktisadi ve İdari Bilimler Fakültesi",
     "Eğitim Fakültesi",
     "Mühendislik Fakültesi",
-    "Enstitüler",
+    "Uygulamalı Matematik Enstitüsü",
+    "Enformatik Enstitüsü",
+    "Deniz Bilimleri Enstitüsü",
+    "Fen Bilimleri Enstitüsü",
+    "Sosyal Bilimler Enstitüsü",
     "Meslek Yüksekokulu",
     "Yabancı Diller Yüksekokulu",
     "Rektörlük",
@@ -110,12 +115,27 @@ DEPARTMENT_ORDER = [
     "Metalurji ve Malzeme Mühendisliği Bölümü",
     "Maden Mühendisliği Bölümü",
     "Petrol ve Doğal Gaz Mühendisliği Bölümü",
-    # Enstitüler
-    "Uygulamalı Matematik Enstitüsü",
-    "Enformatik Enstitüsü",
-    "Deniz Bilimleri Enstitüsü",
+    # Uygulamalı Matematik Enstitüsü
+    "Aktüerya Bilimleri Anabilim Dalı",
+    "Kriptografi Anabilim Dalı",
+    "Finansal Matematik Anabilim Dalı",
+    "Bilimsel Hesaplama Anabilim Dalı",
+    # Enformatik Enstitüsü
+    "Modelleme ve Simülasyon Anabilim Dalı",
+    "Bilişim Sistemleri Anabilim Dalı",
+    "Siber Güvenlik Anabilim Dalı",
+    "Bilişsel Bilimler Anabilim Dalı",
+    "Veri Bilişimi Anabilim Dalı",
+    "Tıbbi Bilişim Anabilim Dalı",
+    # Deniz Bilimleri Enstitüsü
+    "Deniz Biyolojisi ve Balıkçılık Anabilim Dalı",
+    "Deniz Jeolojisi ve Jeofiziği Anabilim Dalı",
+    "Deniz Bilimleri Anabilim Dalı",
+    # Fen Bilimleri Enstitüsü
     "Fen Bilimleri Enstitüsü",
+    # Sosyal Bilimler Enstitüsü
     "Sosyal Bilimler Enstitüsü",
+    "Science and Technology Policy Studies",
     # Meslek Yüksekokulu
     "Elektrik Programı",
     "Elektronik Teknolojisi Programı",
@@ -131,7 +151,16 @@ DEPARTMENT_ORDER = [
     "Akademik Yazı Merkezi",
     # Rektörlüğe Bağlı Bölümler
     "Türk Dili Bölümü",
-    "Müzik ve Güzel Sanatlar Bölümü"
+    "Müzik ve Güzel Sanatlar Bölümü",
+    "Bilim İletişimi Ofisi",
+    "Uluslararası İşbirliği Ofisi",
+    "Kurumsal Veri Yönetimi Koordinatörlüğü",
+    "Yapı Teknolojileri ve İleri Hesaplama Yöntemleri Koordinatörlüğü",
+    "İleri Teknolojilerde Test ve Ölçüm Merkezi",
+    "Tasarım ve Önmodelleme Uygulama ve Araştırma Merkezi (Tasarım Fabrikası)",
+    "ODTÜ Uzaktan Eğitim Uygulama ve Araştırma Merkezi",
+    "Merkez Laboratuvarı",
+    "Teknik Destek Grubu"
 ]
 
 # Official METU Faculty and Department Mapping
@@ -146,7 +175,6 @@ FACULTY_MAPPING = {
     "Faculty of Education": "Eğitim Fakültesi",
     "Mühendislik Fakültesi": "Mühendislik Fakültesi",
     "Faculty of Engineering": "Mühendislik Fakültesi",
-    "Enstitüler": "Enstitüler",
     "Uygulamalı Matematik Enstitüsü": "Uygulamalı Matematik Enstitüsü",
     "Institute of Applied Mathematics": "Uygulamalı Matematik Enstitüsü",
     "Enformatik Enstitüsü": "Enformatik Enstitüsü",
@@ -167,6 +195,7 @@ FACULTY_MAPPING = {
     "Directorate of Computing (Computer Center)": "Rektörlük"
 }
 
+# Updated DEPARTMENT_MAPPING to include all anabilim dalları
 DEPARTMENT_MAPPING = {
     # Mimarlık Fakültesi
     "Mimarlık Bölümü": "Mimarlık Bölümü",
@@ -175,6 +204,7 @@ DEPARTMENT_MAPPING = {
     "Department of City and Regional Planning": "Şehir ve Bölge Planlama Bölümü",
     "Endüstriyel Tasarım Bölümü": "Endüstriyel Tasarım Bölümü",
     "Department of Industrial Design": "Endüstriyel Tasarım Bölümü",
+    
     # Fen Edebiyat Fakültesi
     "Biyolojik Bilimler Bölümü": "Biyolojik Bilimler Bölümü",
     "Department of Biology": "Biyolojik Bilimler Bölümü",
@@ -194,6 +224,7 @@ DEPARTMENT_MAPPING = {
     "Department of Sociology": "Sosyoloji Bölümü",
     "İstatistik Bölümü": "İstatistik Bölümü",
     "Department of Statistics": "İstatistik Bölümü",
+    
     # İktisadi ve İdari Bilimler Fakültesi
     "İşletme Bölümü": "İşletme Bölümü",
     "Department of Business Administration": "İşletme Bölümü",
@@ -203,6 +234,7 @@ DEPARTMENT_MAPPING = {
     "Department of International Relations": "Uluslararası İlişkiler Bölümü",
     "Siyaset Bilimi ve Kamu Yönetimi Bölümü": "Siyaset Bilimi ve Kamu Yönetimi Bölümü",
     "Department of Political Science and Public Administration": "Siyaset Bilimi ve Kamu Yönetimi Bölümü",
+    
     # Eğitim Fakültesi
     "Bilgisayar ve Öğretim Teknolojileri Eğitimi Bölümü": "Bilgisayar ve Öğretim Teknolojileri Eğitimi Bölümü",
     "Department of Computer Education and Instructional Technology": "Bilgisayar ve Öğretim Teknolojileri Eğitimi Bölümü",
@@ -216,6 +248,7 @@ DEPARTMENT_MAPPING = {
     "Department of Physical Education and Sports": "Beden Eğitimi ve Spor Bölümü",
     "Matematik ve Fen Bilimleri Eğitimi Bölümü": "Matematik ve Fen Bilimleri Eğitimi Bölümü",
     "Mathematics and Science Education": "Matematik ve Fen Bilimleri Eğitimi Bölümü",
+    
     # Mühendislik Fakültesi
     "Havacılık ve Uzay Mühendisliği Bölümü": "Havacılık ve Uzay Mühendisliği Bölümü",
     "Department of Aerospace Engineering": "Havacılık ve Uzay Mühendisliği Bölümü",
@@ -245,26 +278,46 @@ DEPARTMENT_MAPPING = {
     "Department of Mining Engineering": "Maden Mühendisliği Bölümü",
     "Petrol ve Doğal Gaz Mühendisliği Bölümü": "Petrol ve Doğal Gaz Mühendisliği Bölümü",
     "Department of Petroleum and Natural Gas Engineering": "Petrol ve Doğal Gaz Mühendisliği Bölümü",
-    # Enstitüler (Sub-divisions)
+    
+    # Uygulamalı Matematik Enstitüsü
+    "Aktüerya Bilimleri Anabilim Dalı": "Aktüerya Bilimleri Anabilim Dalı",
+    "Actuarial Science": "Aktüerya Bilimleri Anabilim Dalı",
+    "Kriptografi Anabilim Dalı": "Kriptografi Anabilim Dalı",
+    "Cryptography": "Kriptografi Anabilim Dalı",
+    "Finansal Matematik Anabilim Dalı": "Finansal Matematik Anabilim Dalı",
+    "Financial Mathematics": "Finansal Matematik Anabilim Dalı",
+    "Bilimsel Hesaplama Anabilim Dalı": "Bilimsel Hesaplama Anabilim Dalı",
+    
+    # Enformatik Enstitüsü
     "Modelleme ve Simülasyon Anabilim Dalı": "Modelleme ve Simülasyon Anabilim Dalı",
     "Bilişim Sistemleri Anabilim Dalı": "Bilişim Sistemleri Anabilim Dalı",
     "Information Systems": "Bilişim Sistemleri Anabilim Dalı",
     "Siber Güvenlik Anabilim Dalı": "Siber Güvenlik Anabilim Dalı",
+    "Bilişsel Bilimler Anabilim Dalı": "Bilişsel Bilimler Anabilim Dalı",
     "Cognitive Science": "Bilişsel Bilimler Anabilim Dalı",
+    "Veri Bilişimi Anabilim Dalı": "Veri Bilişimi Anabilim Dalı",
     "Data Informatics": "Veri Bilişimi Anabilim Dalı",
+    "Tıbbi Bilişim Anabilim Dalı": "Tıbbi Bilişim Anabilim Dalı",
     "Medical Informatics": "Tıbbi Bilişim Anabilim Dalı",
-    "Bilimsel Hesaplama Anabilim Dalı": "Bilimsel Hesaplama Anabilim Dalı",
-    "Actuarial Science": "Aktüerya Bilimleri Anabilim Dalı",
-    "Cryptography": "Kriptografi Anabilim Dalı",
-    "Financial Mathematics": "Finansal Matematik Anabilim Dalı",
+    
+    # Deniz Bilimleri Enstitüsü
     "Deniz Biyolojisi ve Balıkçılık Anabilim Dalı": "Deniz Biyolojisi ve Balıkçılık Anabilim Dalı",
     "Marine Biology and Fisheries": "Deniz Biyolojisi ve Balıkçılık Anabilim Dalı",
     "Deniz Jeolojisi ve Jeofiziği Anabilim Dalı": "Deniz Jeolojisi ve Jeofiziği Anabilim Dalı",
-    "Deniz Bilim (Osinografi) Anabilim Dalı": "Deniz Bilimleri (Oşinografi) Anabilim Dalı",
+    "Deniz Bilimleri (Oşinografi) Anabilim Dalı": "Deniz Bilimleri (Oşinografi) Anabilim Dalı",
     "Oceanography": "Deniz Bilimleri (Oşinografi) Anabilim Dalı",
+    
+    # Fen Bilimleri Enstitüsü
+    "Fen Bilimleri Enstitüsü": "Fen Bilimleri Enstitüsü",
+    
+    # Sosyal Bilimler Enstitüsü
+    "Sosyal Bilimler Enstitüsü": "Sosyal Bilimler Enstitüsü",
+    "Science and Technology Policy Studies": "Science and Technology Policy Studies",
+    
     # Yabancı Diller Yüksekokulu
     "Yabancı Diller Bölümü": "Yabancı Diller Bölümü",
     "Depatment of Foreign Languages": "Yabancı Diller Bölümü",  # Typo correction
+    
     # Rektörlüğe Bağlı Bölümler
     "Türk Dili Bölümü": "Türk Dili Bölümü",
     "Müzik ve Güzel Sanatlar Bölümü": "Müzik ve Güzel Sanatlar Bölümü",
@@ -274,8 +327,8 @@ DEPARTMENT_MAPPING = {
     "Yapı Teknolojileri ve İleri Hesaplama Yöntemleri Koordinatörlüğü": "Yapı Teknolojileri ve İleri Hesaplama Yöntemleri Koordinatörlüğü",
     "İleri Teknolojilerde Test ve Ölçüm Merkezi": "İleri Teknolojilerde Test ve Ölçüm Merkezi",
     "Tasarım ve Önmodelleme Uygulama ve Araştırma Merkezi (Tasarım Fabrikası)": "Tasarım ve Önmodelleme Uygulama ve Araştırma Merkezi (Tasarım Fabrikası)",
-    "METU Distance Education Application and Research Center": "ODTÜ Uzaktan Eğitim Uygulama ve Araştırma Merkezi",
-    "Central Laboratory": "Merkez Laboratuvarı",
+    "ODTÜ Uzaktan Eğitim Uygulama ve Araştırma Merkezi": "ODTÜ Uzaktan Eğitim Uygulama ve Araştırma Merkezi",
+    "Merkez Laboratuvarı": "Merkez Laboratuvarı",
     "Teknik Destek Grubu": "Teknik Destek Grubu"
 }
 
@@ -312,7 +365,7 @@ if uploaded_file is not None:
         df['Birim'] = pd.Categorical(df['Birim'], categories=[f for f in FACULTY_ORDER if f in df['Birim'].unique()], ordered=True)
         df['Bölüm'] = pd.Categorical(df['Bölüm'], categories=[d for d in DEPARTMENT_ORDER if d in df['Bölüm'].unique()], ordered=True)
         
-        st.success("Dosya başarıyla yüklendi. Fakülte/bölüm isimleri standardize edildi.")
+        st.success("Dosya başarıyla yüklendi ve fakülte/bölüm isimleri standardize edildi.")
         
         # Check for unmapped faculties or departments
         unmapped_faculties = df['Birim'][~df['Birim'].isin(FACULTY_MAPPING.values())].unique()
@@ -374,7 +427,7 @@ if uploaded_file is not None:
     else:
         st.info("Veri hataları nedeniyle kaldırılan araştırmacı yok.")
 
-    # Optimize edilmiş "Unvan" çıkarma fonksiyonu (Refined version)
+    # Optimize edilmiş "Unvan" çıkarma fonksiyonu
     def extract_title(name):
         titles = [
             "Prof. Dr.", "Prof.", "Doç. Dr.", "Dr. Öğr. Üyesi", "Öğr. Gör.", "Arş. Gör.",
@@ -382,25 +435,19 @@ if uploaded_file is not None:
         ]
         title_mapping = {
             "Prof. Dr.": "Prof. Dr.",
-            "Prof.": "Prof. Dr.",  # Only standalone "Prof." maps to "Prof. Dr."
+            "Prof.": "Prof. Dr.",
             "Doç. Dr.": "Doç. Dr.",
             "Dr. Öğr. Üyesi": "Dr. Öğr. Üyesi",
             "Öğr. Gör.": "Öğr. Gör.",
             "Arş. Gör.": "Arş. Gör.",
-            "Asst. Prof.": "Dr. Öğr. Üyesi",  # Assistant Professor
-            "Assoc. Prof.": "Doç. Dr.",      # Associate Professor
+            "Asst. Prof.": "Dr. Öğr. Üyesi",
+            "Assoc. Prof.": "Doç. Dr.",
             "Lect. PhD": "Öğr. Gör.",
             "Res. Asst.": "Arş. Gör."
         }
-        
-        # Check titles in order of specificity to avoid partial matches
         for title in titles:
             if title in name:
-                # Ensure "Prof." is not part of "Asst. Prof." or "Assoc. Prof."
-                if title == "Prof." and ("Asst. Prof." not in name and "Assoc. Prof." not in name):
-                    return title_mapping[title]
-                elif title != "Prof.":
-                    return title_mapping[title]
+                return title_mapping[title]
         return "Diğer"
 
     # Unvan sütununu ekle
@@ -454,64 +501,6 @@ if uploaded_file is not None:
     fig2.update_traces(marker_color="blue")
     st.plotly_chart(fig2, use_container_width=True)
     st.write("**Açıklama:** Birim (örneğin fakülte) başına araştırmacı sayısı.")
-
-        # 11. Birim Bazında AB Projesi Dağılımı (Pasta Grafiği)
-    st.header("Birim Bazında AB Projesi Dağılımı", anchor="birim-ab-projesi")
-    eu_cols = [col for col in df.columns if "AB Projesi" in col]
-    eu_data = df.groupby("Birim")[eu_cols].sum().sum(axis=1).reset_index()
-    eu_data.columns = ["Birim", "AB Projeleri"]
-    eu_data["Birim"] = pd.Categorical(eu_data["Birim"], categories=FACULTY_ORDER, ordered=True)
-    fig13 = px.pie(eu_data, names="Birim", values="AB Projeleri", title="Birim Bazında AB Projesi Dağılımı")
-    fig13.update_layout(height=600, width=1000)
-    st.plotly_chart(fig13, use_container_width=True)
-    st.write("**Açıklama:** Birimlere göre AB projeleri. Her dilim bir birimi gösterir.")
-
-    # 12. Yıl Bazında Yayın Kalitesi Dağılımı (Pasta Grafiği)
-    st.header("Yıl Bazında Yayın Kalitesi Dağılımı", anchor="yil-yayin-kalitesi")
-    pub_quality_cols = [col for col in df.columns if "SCI, SCI-E, SSCI veya AHCI kapsamındaki hakemli dergide yayımlanan tam makale veya derleme" in col]
-    pub_quality_data = df[pub_quality_cols].sum().reset_index()
-    pub_quality_data["Yıl"] = pub_quality_data["index"].str.extract(r"\((\d{4})\)")[0]
-    pub_quality_data["Kalite"] = pub_quality_data["index"].str.extract(r"\((Q\d Grubu)\)")
-    pub_quality_data = pub_quality_data.dropna(subset=["Kalite"])
-    pub_quality_data = pub_quality_data.groupby(["Yıl", "Kalite"]).sum().reset_index()
-    for year in ["2025", "2026", "2027"]:
-        year_data = pub_quality_data[pub_quality_data["Yıl"] == year]
-        fig = px.pie(year_data, names="Kalite", values=0, title=f"{year} Yılında Yayın Kalitesi Dağılımı")
-        fig.update_layout(height=500, width=800)
-        st.plotly_chart(fig, use_container_width=True)
-        st.write(f"**Açıklama:** {year} yılı için yayın kalitesi (Q1, Q2, Q3, Q4). Her dilim bir kalite grubunu gösterir.")
-
-    # 13. Toplam Yayın Sayısına Göre İlk 5 Bölüm (Çubuk Grafiği)
-    st.header("Toplam Yayın Sayısına Göre İlk 5 Bölüm", anchor="top-5-bolum")
-    pub_cols_all = [col for col in df.columns if any(p in col for p in ["SCI", "ESCI", "Scopus", "AHCI kapsamındaki hakemli dergide yayımlanan tam makale veya derleme (Quartile Sınıflandırması Bulunmayan)"])]
-    df["Toplam Yayınlar"] = df[pub_cols_all].sum(axis=1)
-    top_depts = df.groupby("Bölüm")["Toplam Yayınlar"].sum().reset_index()
-    top_depts = top_depts.sort_values("Toplam Yayınlar", ascending=False).head(5)
-    top_depts["Bölüm"] = pd.Categorical(top_depts["Bölüm"], categories=DEPARTMENT_ORDER, ordered=True)
-    fig14 = px.bar(top_depts, x="Bölüm", y="Toplam Yayınlar", title="Toplam Yayın Sayısına Göre İlk 5 Bölüm")
-    fig14.update_layout(
-        xaxis={'tickangle': 45},
-        height=500,
-        width=1000
-    )
-    fig14.update_traces(marker_color="green")
-    st.plotly_chart(fig14, use_container_width=True)
-    st.write("**Açıklama:** En çok yayın yapan 5 bölüm. Toplam yayınlar SCI, ESCI, Scopus vb. içerir.")
-
-    # 13b. Toplam Yayın Sayısına Göre İlk 5 Birim (Çubuk Grafiği)
-    st.header("Toplam Yayın Sayısına Göre İlk 5 Birim", anchor="top-5-birim")
-    top_faculties = df.groupby("Birim")["Toplam Yayınlar"].sum().reset_index()
-    top_faculties = top_faculties.sort_values("Toplam Yayınlar", ascending=False).head(5)
-    top_faculties["Birim"] = pd.Categorical(top_faculties["Birim"], categories=FACULTY_ORDER, ordered=True)
-    fig14b = px.bar(top_faculties, x="Birim", y="Toplam Yayınlar", title="Toplam Yayın Sayısına Göre İlk 5 Birim")
-    fig14b.update_layout(
-        xaxis={'tickangle': 45},
-        height=500,
-        width=1000
-    )
-    fig14b.update_traces(marker_color="green")
-    st.plotly_chart(fig14b, use_container_width=True)
-    st.write("**Açıklama:** En çok yayın yapan 5 birim. Toplam yayınlar SCI, ESCI, Scopus vb. içerir.")
 
     # 3. Bölüm ve Unvan Bazında Başvuru Sayısı (Balon Grafiği)
     st.header("Bölüm ve Unvan Bazında Başvuru Sayısı (Balon Grafiği)", anchor="bolum-unvan-balon")
@@ -780,6 +769,64 @@ if uploaded_file is not None:
     fig12b.update_layout(height=600, width=1000)
     st.plotly_chart(fig12b, use_container_width=True)
     st.write("**Açıklama:** Q1+Q2 yayınlar ve projeler. Birimlere göre renklendirilmiş. Nokta büyüklüğü toplam çıktıyı gösterir.")
+
+    # 11. Birim Bazında AB Projesi Dağılımı (Pasta Grafiği)
+    st.header("Birim Bazında AB Projesi Dağılımı", anchor="birim-ab-projesi")
+    eu_cols = [col for col in df.columns if "AB Projesi" in col]
+    eu_data = df.groupby("Birim")[eu_cols].sum().sum(axis=1).reset_index()
+    eu_data.columns = ["Birim", "AB Projeleri"]
+    eu_data["Birim"] = pd.Categorical(eu_data["Birim"], categories=FACULTY_ORDER, ordered=True)
+    fig13 = px.pie(eu_data, names="Birim", values="AB Projeleri", title="Birim Bazında AB Projesi Dağılımı")
+    fig13.update_layout(height=600, width=1000)
+    st.plotly_chart(fig13, use_container_width=True)
+    st.write("**Açıklama:** Birimlere göre AB projeleri. Her dilim bir birimi gösterir.")
+
+    # 12. Yıl Bazında Yayın Kalitesi Dağılımı (Pasta Grafiği)
+    st.header("Yıl Bazında Yayın Kalitesi Dağılımı", anchor="yil-yayin-kalitesi")
+    pub_quality_cols = [col for col in df.columns if "SCI, SCI-E, SSCI veya AHCI kapsamındaki hakemli dergide yayımlanan tam makale veya derleme" in col]
+    pub_quality_data = df[pub_quality_cols].sum().reset_index()
+    pub_quality_data["Yıl"] = pub_quality_data["index"].str.extract(r"\((\d{4})\)")[0]
+    pub_quality_data["Kalite"] = pub_quality_data["index"].str.extract(r"\((Q\d Grubu)\)")
+    pub_quality_data = pub_quality_data.dropna(subset=["Kalite"])
+    pub_quality_data = pub_quality_data.groupby(["Yıl", "Kalite"]).sum().reset_index()
+    for year in ["2025", "2026", "2027"]:
+        year_data = pub_quality_data[pub_quality_data["Yıl"] == year]
+        fig = px.pie(year_data, names="Kalite", values=0, title=f"{year} Yılında Yayın Kalitesi Dağılımı")
+        fig.update_layout(height=500, width=800)
+        st.plotly_chart(fig, use_container_width=True)
+        st.write(f"**Açıklama:** {year} yılı için yayın kalitesi (Q1, Q2, Q3, Q4). Her dilim bir kalite grubunu gösterir.")
+
+    # 13. Toplam Yayın Sayısına Göre İlk 5 Bölüm (Çubuk Grafiği)
+    st.header("Toplam Yayın Sayısına Göre İlk 5 Bölüm", anchor="top-5-bolum")
+    pub_cols_all = [col for col in df.columns if any(p in col for p in ["SCI", "ESCI", "Scopus", "AHCI kapsamındaki hakemli dergide yayımlanan tam makale veya derleme (Quartile Sınıflandırması Bulunmayan)"])]
+    df["Toplam Yayınlar"] = df[pub_cols_all].sum(axis=1)
+    top_depts = df.groupby("Bölüm")["Toplam Yayınlar"].sum().reset_index()
+    top_depts = top_depts.sort_values("Toplam Yayınlar", ascending=False).head(5)
+    top_depts["Bölüm"] = pd.Categorical(top_depts["Bölüm"], categories=DEPARTMENT_ORDER, ordered=True)
+    fig14 = px.bar(top_depts, x="Bölüm", y="Toplam Yayınlar", title="Toplam Yayın Sayısına Göre İlk 5 Bölüm")
+    fig14.update_layout(
+        xaxis={'tickangle': 45},
+        height=500,
+        width=1000
+    )
+    fig14.update_traces(marker_color="green")
+    st.plotly_chart(fig14, use_container_width=True)
+    st.write("**Açıklama:** En çok yayın yapan 5 bölüm. Toplam yayınlar SCI, ESCI, Scopus vb. içerir.")
+
+    # 13b. Toplam Yayın Sayısına Göre İlk 5 Birim (Çubuk Grafiği)
+    st.header("Toplam Yayın Sayısına Göre İlk 5 Birim", anchor="top-5-birim")
+    top_faculties = df.groupby("Birim")["Toplam Yayınlar"].sum().reset_index()
+    top_faculties = top_faculties.sort_values("Toplam Yayınlar", ascending=False).head(5)
+    top_faculties["Birim"] = pd.Categorical(top_faculties["Birim"], categories=FACULTY_ORDER, ordered=True)
+    fig14b = px.bar(top_faculties, x="Birim", y="Toplam Yayınlar", title="Toplam Yayın Sayısına Göre İlk 5 Birim")
+    fig14b.update_layout(
+        xaxis={'tickangle': 45},
+        height=500,
+        width=1000
+    )
+    fig14b.update_traces(marker_color="green")
+    st.plotly_chart(fig14b, use_container_width=True)
+    st.write("**Açıklama:** En çok yayın yapan 5 birim. Toplam yayınlar SCI, ESCI, Scopus vb. içerir.")
 
     # 14. Zaman İçindeki Proje Türü Dağılımı (Çizgi Grafiği)
     st.header("Zaman İçindeki Proje Türü Dağılımı", anchor="zaman-proje-turu")
