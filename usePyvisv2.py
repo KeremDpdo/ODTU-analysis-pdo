@@ -365,7 +365,7 @@ if uploaded_file is not None:
         df['Birim'] = pd.Categorical(df['Birim'], categories=[f for f in FACULTY_ORDER if f in df['Birim'].unique()], ordered=True)
         df['Bölüm'] = pd.Categorical(df['Bölüm'], categories=[d for d in DEPARTMENT_ORDER if d in df['Bölüm'].unique()], ordered=True)
         
-        st.success("Dosya başarıyla yüklendi ve fakülte/bölüm isimleri standardize edildi.")
+        st.success("Dosya başarıyla yüklendi ve fakülte/bölüm isimleri standardize edildi!")
         
         # Check for unmapped faculties or departments
         unmapped_faculties = df['Birim'][~df['Birim'].isin(FACULTY_MAPPING.values())].unique()
@@ -466,41 +466,66 @@ if uploaded_file is not None:
         st.write("**Benzersiz değer sayıları:**")
         st.write(df.nunique())
 
-    # 1. Bölüm Bazında Proje/Yayın Dağılımı
+    # 1. Bölüm Bazında Proje/Yayın Dağılımı (Yıl ve Çeyreklik Bazında, Ayrı Grafikler)
     st.header("Bölüm Bazında Proje/Yayın Dağılımı", anchor="bolum-bazinda-dagilim")
-    count_data = df["Bölüm"].value_counts().reset_index()
-    count_data.columns = ["Bölüm", "Sayı"]
-    count_data["Bölüm"] = pd.Categorical(count_data["Bölüm"], categories=DEPARTMENT_ORDER, ordered=True)
-    count_data = count_data.sort_values("Bölüm")
-    fig1 = px.bar(count_data, x="Bölüm", y="Sayı", title="Bölüm Bazında Proje/Yayın Dağılımı")
-    fig1.update_layout(
-        xaxis={'tickangle': 45},
-        height=600,
-        width=3000,
-        margin=dict(l=30, r=30, t=30, b=30),
-        autosize=False
-    )
-    fig1.update_traces(marker_color="blue")
-    st.plotly_chart(fig1, use_container_width=True)
-    st.write("**Açıklama:** Bölüm başına araştırmacı sayısı.")
+    quartile_cols = [col for col in df.columns if "Q1 Grubu" in col or "Q2 Grubu" in col or "Q3 Grubu" in col or "Q4 Grubu" in col]
+    pub_data = df.groupby("Bölüm")[quartile_cols].sum().reset_index()
+    pub_data_melted = pub_data.melt(id_vars="Bölüm", value_vars=quartile_cols, var_name="Publication", value_name="Sayı")
+    pub_data_melted["Yıl"] = pub_data_melted["Publication"].str.extract(r"\((\d{4})\)")[0]
+    pub_data_melted["Çeyreklik"] = pub_data_melted["Publication"].str.extract(r"\((Q\d Grubu)\)")[0]
+    pub_data_melted = pub_data_melted.dropna(subset=["Çeyreklik"])
+    pub_data_melted["Bölüm"] = pd.Categorical(pub_data_melted["Bölüm"], categories=DEPARTMENT_ORDER, ordered=True)
+    pub_data_melted["Çeyreklik"] = pub_data_melted["Çeyreklik"].map({
+        "Q1 Grubu": "Q1 Makaleleri",
+        "Q2 Grubu": "Q2 Makaleleri",
+        "Q3 Grubu": "Q3 Makaleleri",
+        "Q4 Grubu": "Q4 Makaleleri"
+    })
 
-    # 2. Birim Bazında Proje/Yayın Dağılımı
+    # Her yıl için ayrı grafik oluştur
+    for year in ["2025", "2026", "2027"]:
+        year_data = pub_data_melted[pub_data_melted["Yıl"] == year]
+        fig = px.bar(year_data, x="Bölüm", y="Sayı", color="Çeyreklik", barmode="group",
+                     title=f"Bölüm Bazında {year} Yılı Yayın Çeyreklik Dağılımı")
+        fig.update_layout(
+            xaxis={'tickangle': 45},
+            height=600,
+            width=3000,
+            margin=dict(l=30, r=30, t=30, b=30),
+            autosize=False
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    st.write("**Açıklama:** Bölüm başına yayın sayısı, her yıl (2025, 2026, 2027) için ayrı grafiklerde çeyrekliklere (Q1, Q2, Q3, Q4) göre gösterilmiştir.")
+
+    # 2. Birim Bazında Proje/Yayın Dağılımı (Yıl ve Çeyreklik Bazında, Ayrı Grafikler)
     st.header("Birim Bazında Proje/Yayın Dağılımı", anchor="birim-bazinda-dagilim")
-    count_data_birim = df["Birim"].value_counts().reset_index()
-    count_data_birim.columns = ["Birim", "Sayı"]
-    count_data_birim["Birim"] = pd.Categorical(count_data_birim["Birim"], categories=FACULTY_ORDER, ordered=True)
-    count_data_birim = count_data_birim.sort_values("Birim")
-    fig2 = px.bar(count_data_birim, x="Birim", y="Sayı", title="Birim Bazında Proje/Yayın Dağılımı")
-    fig2.update_layout(
-        xaxis={'tickangle': 45},
-        height=500,
-        width=3000,
-        margin=dict(l=30, r=30, t=30, b=30),
-        autosize=False
-    )
-    fig2.update_traces(marker_color="blue")
-    st.plotly_chart(fig2, use_container_width=True)
-    st.write("**Açıklama:** Birim (örneğin fakülte) başına araştırmacı sayısı.")
+    pub_data_birim = df.groupby("Birim")[quartile_cols].sum().reset_index()
+    pub_data_birim_melted = pub_data_birim.melt(id_vars="Birim", value_vars=quartile_cols, var_name="Publication", value_name="Sayı")
+    pub_data_birim_melted["Yıl"] = pub_data_birim_melted["Publication"].str.extract(r"\((\d{4})\)")[0]
+    pub_data_birim_melted["Çeyreklik"] = pub_data_birim_melted["Publication"].str.extract(r"\((Q\d Grubu)\)")[0]
+    pub_data_birim_melted = pub_data_birim_melted.dropna(subset=["Çeyreklik"])
+    pub_data_birim_melted["Birim"] = pd.Categorical(pub_data_birim_melted["Birim"], categories=FACULTY_ORDER, ordered=True)
+    pub_data_birim_melted["Çeyreklik"] = pub_data_birim_melted["Çeyreklik"].map({
+        "Q1 Grubu": "Q1 Makaleleri",
+        "Q2 Grubu": "Q2 Makaleleri",
+        "Q3 Grubu": "Q3 Makaleleri",
+        "Q4 Grubu": "Q4 Makaleleri"
+    })
+
+    # Her yıl için ayrı grafik oluştur
+    for year in ["2025", "2026", "2027"]:
+        year_data = pub_data_birim_melted[pub_data_birim_melted["Yıl"] == year]
+        fig = px.bar(year_data, x="Birim", y="Sayı", color="Çeyreklik", barmode="group",
+                     title=f"Birim Bazında {year} Yılı Yayın Çeyreklik Dağılımı")
+        fig.update_layout(
+            xaxis={'tickangle': 45},
+            height=600,
+            width=3000,
+            margin=dict(l=30, r=30, t=30, b=30),
+            autosize=False
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    st.write("**Açıklama:** Birim (örneğin fakülte) başına yayın sayısı, her yıl (2025, 2026, 2027) için ayrı grafiklerde çeyrekliklere (Q1, Q2, Q3, Q4) göre gösterilmiştir.")
 
     # 3. Bölüm ve Unvan Bazında Başvuru Sayısı (Balon Grafiği)
     st.header("Bölüm ve Unvan Bazında Başvuru Sayısı (Balon Grafiği)", anchor="bolum-unvan-balon")
